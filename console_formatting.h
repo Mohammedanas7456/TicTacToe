@@ -323,9 +323,9 @@ bool setFgClr(string FgClrName, string BgClrName = " ")
     return true; //confirming the color has been set.
 }
 
-void colorPixel(short x, short y, string bgClrName, string fgClrName="White")
+void colorPixel(short x, short y, string bgClrName="", string fgClrName="")
 {
-    short /*fgCode, bgCode,*/ clrCode;
+    short clrCode;
 
     clrCode = (clrStrToCode(bgClrName)*16)+clrStrToCode(fgClrName);
 
@@ -337,7 +337,7 @@ void colorPixel(short x, short y, string bgClrName, string fgClrName="White")
     WriteConsoleOutputAttribute(stdout_handle, &Attr, 1, coords, &written);
 }
 
-void colorArea(string fgClrName, short x, short y, int units, string bgClrName = " ")
+void colorArea(string fgClrName, short x, short y, int units, string bgClrName = "")
 {
     short fgCode, bgCode, clrCode;
 
@@ -396,7 +396,7 @@ void cursorVisAndSize(bool visibility, short len = -1)
     SetConsoleCursorInfo(consoleHandle, &info);
 }
 
-void WriteTextAtLoc(string text, short x, short y)
+void WriteTextAtLoc(string text, short x, short y, string fgClrName="", string bgClrName="")
 {
     HANDLE stdout_handle = GetStdHandle(STD_OUTPUT_HANDLE);
     DWORD written = 0;
@@ -404,6 +404,21 @@ void WriteTextAtLoc(string text, short x, short y)
     COORD cords = {x,y};
 
     WriteConsoleOutputCharacter(stdout_handle,&text[0],len,cords,&written);
+    if(fgClrName!="" || bgClrName!="")
+        colorArea(fgClrName, x, y, len, bgClrName);
+}
+
+void WriteTextAtLoc(char character, short x, short y, string fgClrName="", string bgClrName="")
+{
+    string text(1, character);
+    HANDLE stdout_handle = GetStdHandle(STD_OUTPUT_HANDLE);
+    DWORD written = 0;
+    int len = text.size();
+    COORD cords = {x,y};
+
+    WriteConsoleOutputCharacter(stdout_handle,&text[0],len,cords,&written);
+    if(fgClrName!="" || bgClrName!="")
+        colorArea(fgClrName, x, y, len, bgClrName);
 }
 
 void clrdLine(string clr, short x1, short y1, short x2, short y2)

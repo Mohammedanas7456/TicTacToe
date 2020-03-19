@@ -1,6 +1,14 @@
 #include "./config.cpp"
 #include <cmath>
+#include <stdlib.h>
 using namespace std;
+
+//functions signatures
+void main_menu();
+void setting_menu();
+void bg_color_menu();
+void bl_color_menu();
+void b_back_color_menu();
 
 struct State {
     char main_array[BOARD_SIZE][BOARD_SIZE];
@@ -9,6 +17,18 @@ struct State {
     bool game_over;
 };
 State state;
+
+void fillCellColor(string color , int x , int y)
+    {
+        int factor = BOARD_SIZE/2;
+    _location offset = {LINE_GAP.x + BOARD_LINE_THICKNESS.x, LINE_GAP.y + BOARD_LINE_THICKNESS.y};
+    _location start = {START_POS.x - factor*offset.x - LINE_GAP.x/2, START_POS.y - factor*offset.y - LINE_GAP.y/2};
+    int x1 = start.x + x*offset.x;
+    int x2 = x1 + LINE_GAP.x;
+    int y1 = start.y + y*offset.y;
+    int y2 = y1 + LINE_GAP.y;
+    clrdLine(color,x1,y1,x2,y2);
+    }
 
 //fill initial state array
 void fill_array(char arr[][BOARD_SIZE], char marker){
@@ -28,15 +48,9 @@ void init(){
     setConsoleScrollBarVisibility(false);
     cursorVisAndSize(false);
     enableConsoleResize(false);
-    fill_array(state.main_array, EMPTY_MARKER);
-    state.curr_player = 0;
-    state.curr_pos = {0, 0};
-    state.game_over = false;
 }
 
-
-char GetArrowKeysInput()
-{
+char GetArrowKeysInput(){
     while(1)
     {
     switch(getch())
@@ -56,6 +70,13 @@ char GetArrowKeysInput()
 }
 
 void renderBoard(){
+
+    /*int y1 = START_POS.y - LINE_GAP.y/2 - (BOARD_SIZE/2)*LINE_GAP.y - (BOARD_SIZE/2 + 1)*BOARD_LINE_THICKNESS.y;
+    int y2 = START_POS.y + LINE_GAP.y/2 + (BOARD_SIZE/2)*LINE_GAP.y + (BOARD_SIZE/2 + 1)*BOARD_LINE_THICKNESS.y;
+    int x1 = START_POS.x - LINE_GAP.x/2 - (BOARD_SIZE/2)*LINE_GAP.x - (BOARD_SIZE/2 + 1)*BOARD_LINE_THICKNESS.x;
+    int x2 = START_POS.x + LINE_GAP.x/2 + (BOARD_SIZE/2)*LINE_GAP.x + (BOARD_SIZE/2 + 1)*BOARD_LINE_THICKNESS.x;
+    clrdLine(BOARD_BG_CLR,x1,y1,x2,y2);*/
+
     for(int i=0; i<BOARD_SIZE+1 ; i++)
     {
         //horizontal line
@@ -79,15 +100,19 @@ void printMarkerOnBoard(char marker, int x, int y){
     _location offset = {LINE_GAP.x + BOARD_LINE_THICKNESS.x, LINE_GAP.y + BOARD_LINE_THICKNESS.y};
     _location start = {START_POS.x - factor*offset.x, START_POS.y - factor*offset.y};
 
-    Locate(start.x + x*offset.x, start.y + y*offset.y);
-    cout << marker;
+    string textBgClr = HIGHLIGHT_CLR;
+    if(state.curr_pos.x != x || state.curr_pos.y != y) textBgClr = BOARD_BG_CLR;
+    WriteTextAtLoc(marker, start.x + x*offset.x, start.y + y*offset.y, "White", textBgClr);
 }
 
-void stateArray2Board()
-{
+void stateArray2Board(){
     for(int r=0; r<BOARD_SIZE; ++r){
         for(int c=0; c<BOARD_SIZE; ++c){
-            printMarkerOnBoard(state.main_array[r][c], c, r);
+            if(state.curr_pos.x != c || state.curr_pos.y != r)
+                fillCellColor(BOARD_BG_CLR, c, r);
+            char currMarker = state.main_array[r][c];
+            if(currMarker != EMPTY_MARKER)
+                printMarkerOnBoard(state.main_array[r][c], c, r);
         }
     }
 }
@@ -189,8 +214,7 @@ void gameLogic(int row=BOARD_SIZE, int col=BOARD_SIZE){
     state.curr_player= !state.curr_player;
 }
 
-void getUserMove()
-{
+void getUserMove(){
     char Input=GetArrowKeysInput();
     if(Input=='U' && state.curr_pos.y > 0)
         state.curr_pos.y--;
@@ -208,15 +232,118 @@ void getUserMove()
     }
 }
 
+void startGame(){
+    fill_array(state.main_array, EMPTY_MARKER);
+    state.curr_player = 0;
+    state.curr_pos = {0, 0};
+    state.game_over = false;
+
+    renderBoard();
+    //programlogic
+    while(state.game_over == false)
+        {
+            //rendering board
+            //renderBoard();
+            fillCellColor(HIGHLIGHT_CLR, state.curr_pos.x, state.curr_pos.y);
+            stateArray2Board();
+            getUserMove();
+        }
+
+}
+
+void setting_menu(){
+    Menu settingMenu({"BOARD SIZE" , "BACKGROUND COLOR", "BOARD LINES COLOR" , "BOARD BACK COLOR" , "PLAYER MARKER" , "BACK"});
+    system("cls");
+    settingMenu.setHeading("SETTINGS");
+    switch(settingMenu.drawMenu()){
+    case 1 :
+            cout << "FEATURE NOT INTRODUCED";
+            break;
+    case 2 :
+        bg_color_menu();
+        break;
+    case 3 :
+        bl_color_menu();
+        break;
+    case 4 :
+        b_back_color_menu();
+        break;
+    case 5 :
+        break;
+    case 6 :
+        main_menu();
+        break;
+    }
+
+}
+
+void bg_color_menu()
+{
+    system("cls");
+    Menu bgClrMenu(colorNames);
+    bgClrMenu.setHeading("SELECT COLOR");
+    int selectedColor = bgClrMenu.drawMenu();
+    if(selectedColor == colorNames.size())
+        setting_menu();
+    else{
+    setBgClr(colorCodes[selectedColor-1],true);
+    bg_color_menu();
+    }
+
+}
+
+void bl_color_menu()
+{
+{
+    system("cls");
+    Menu blClrMenu(colorNames);
+    blClrMenu.setHeading("SELECT COLOR");
+    int selectedColor = blClrMenu.drawMenu();
+    if(selectedColor == colorNames.size())
+        setting_menu();
+    else{
+    BOARD_CLR=(colorCodes[selectedColor-1]);
+    setting_menu();
+    }
+}
+}
+
+void b_back_color_menu()
+{
+    system("cls");
+    Menu bBackClrMenu(colorNames);
+    bBackClrMenu.setHeading("SELECT COLOR");
+    int selectedColor = bBackClrMenu.drawMenu();
+    if(selectedColor < colorNames.size())
+        BOARD_BG_CLR=(colorCodes[selectedColor-1]);
+    setting_menu();
+}
+
+void main_menu(){
+    system("cls");
+    Menu mainMenu({"Two Players" , "Player VS C.P.U" , "Settings", "Exit"});
+    mainMenu.setHeading("TIK - TAK - TOE GAME");
+    switch(mainMenu.drawMenu())
+    {
+        case 1 :
+                system("cls");
+                startGame();
+                break;
+        case 2 :
+                system("cls");
+                cout << "FEATURE IS NOT YET INTRODUCED";
+                break;
+        case 3 :
+                system("cls");
+                setting_menu();
+                break;
+        case 4 :
+                break;
+    }
+}
 
 
 int main(){
     init();
-    renderBoard();
-    while(state.game_over == false)
-    {
-        stateArray2Board();
-        printMarkerOnBoard(getCurrMarker(state.curr_player), state.curr_pos.x, state.curr_pos.y);
-        getUserMove();
-    }
+    main_menu();
 }
