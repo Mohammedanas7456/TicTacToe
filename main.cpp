@@ -10,6 +10,7 @@ struct State {
 };
 State state;
 
+//fill initial state array
 void fill_array(char arr[][BOARD_SIZE], char marker){
     for(int i=0; i<BOARD_SIZE; i++)
         {
