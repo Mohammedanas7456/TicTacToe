@@ -1,25 +1,31 @@
-#include "./config.cpp"
-#include <cmath>
 #include <stdlib.h>
+#include <cmath>
+#include <cstdlib>
+#include "./config.cpp"
 using namespace std;
+
+
 
 //functions signatures
 void main_menu();
 void setting_menu();
+void board_size();
 void bg_color_menu();
 void bl_color_menu();
 void b_back_color_menu();
+void player_marker();
+void marker_color();
+void print_curr_player();
 
 struct State {
-    char main_array[BOARD_SIZE][BOARD_SIZE];
+    vector<vector<char>> main_array;
     bool curr_player;
     _location curr_pos;
     bool game_over;
 };
 State state;
 
-void fillCellColor(string color , int x , int y)
-    {
+void fillCellColor(string color , int x , int y){
         int factor = BOARD_SIZE/2;
     _location offset = {LINE_GAP.x + BOARD_LINE_THICKNESS.x, LINE_GAP.y + BOARD_LINE_THICKNESS.y};
     _location start = {START_POS.x - factor*offset.x - LINE_GAP.x/2, START_POS.y - factor*offset.y - LINE_GAP.y/2};
@@ -29,18 +35,6 @@ void fillCellColor(string color , int x , int y)
     int y2 = y1 + LINE_GAP.y;
     clrdLine(color,x1,y1,x2,y2);
     }
-
-//fill initial state array
-void fill_array(char arr[][BOARD_SIZE], char marker){
-    for(int i=0; i<BOARD_SIZE; i++)
-        {
-            for(int j=0; j<BOARD_SIZE; j++)
-            {
-                arr[i][j]=marker;
-            }
-
-        }
-}
 
 void init(){
     setBgClr(BG_CLR, true);
@@ -77,6 +71,17 @@ void renderBoard(){
     int x2 = START_POS.x + LINE_GAP.x/2 + (BOARD_SIZE/2)*LINE_GAP.x + (BOARD_SIZE/2 + 1)*BOARD_LINE_THICKNESS.x;
     clrdLine(BOARD_BG_CLR,x1,y1,x2,y2);*/
 
+    if(BOARD_SIZE==9)
+    {
+    Locate(34,1);
+    cout << "TIC-TAK-TOE";
+    }
+    else
+    {
+    Locate(34,4);
+    cout << "TIC-TAK-TOE";
+    }
+
     for(int i=0; i<BOARD_SIZE+1 ; i++)
     {
         //horizontal line
@@ -102,7 +107,7 @@ void printMarkerOnBoard(char marker, int x, int y){
 
     string textBgClr = HIGHLIGHT_CLR;
     if(state.curr_pos.x != x || state.curr_pos.y != y) textBgClr = BOARD_BG_CLR;
-    WriteTextAtLoc(marker, start.x + x*offset.x, start.y + y*offset.y, "White", textBgClr);
+    WriteTextAtLoc(marker, start.x + x*offset.x, start.y + y*offset.y, MARKERCLR , textBgClr);
 }
 
 void stateArray2Board(){
@@ -233,7 +238,8 @@ void getUserMove(){
 }
 
 void startGame(){
-    fill_array(state.main_array, EMPTY_MARKER);
+    //fill_array(state.main_array, EMPTY_MARKER);
+    state.main_array = vector<vector<char>>(BOARD_SIZE, vector<char>(BOARD_SIZE,EMPTY_MARKER));
     state.curr_player = 0;
     state.curr_pos = {0, 0};
     state.game_over = false;
@@ -242,22 +248,35 @@ void startGame(){
     //programlogic
     while(state.game_over == false)
         {
-            //rendering board
-            //renderBoard();
+            print_curr_player();
             fillCellColor(HIGHLIGHT_CLR, state.curr_pos.x, state.curr_pos.y);
             stateArray2Board();
             getUserMove();
         }
+    stateArray2Board();
 
 }
 
+void print_curr_player(){
+    if(state.curr_player==0)
+    {
+        Locate(3,0);
+        cout << "1st PLAYER TURN " << PLAYER_1_MARKER << "                                                                      ";
+    }
+    else
+    {
+        Locate(3,0);
+        cout << "                                                      2nd PLAYER TURN  " << PLAYER_2_MARKER;
+    }
+}
+
 void setting_menu(){
-    Menu settingMenu({"BOARD SIZE" , "BACKGROUND COLOR", "BOARD LINES COLOR" , "BOARD BACK COLOR" , "PLAYER MARKER" , "BACK"});
+    Menu settingMenu({"BOARD SIZE" , "BACKGROUND COLOR", "BOARD LINES COLOR" , "BOARD BACK COLOR" , "PLAYER MARKER", "PLAYER MARKER COLOR" , "BACK"});
     system("cls");
     settingMenu.setHeading("SETTINGS");
     switch(settingMenu.drawMenu()){
     case 1 :
-            cout << "FEATURE NOT INTRODUCED";
+            board_size();
             break;
     case 2 :
         bg_color_menu();
@@ -269,16 +288,46 @@ void setting_menu(){
         b_back_color_menu();
         break;
     case 5 :
+        player_marker();
         break;
     case 6 :
-        main_menu();
+        marker_color();
         break;
+    case 7 :
+        main_menu();
     }
 
 }
 
-void bg_color_menu()
-{
+void board_size(){
+    system("cls");
+    Menu boardSize({"3x3","5x5","7x7","9x9","BACK"});
+    boardSize.setHeading("SELECT BOARD SIZE");
+    int selectedSize = boardSize.drawMenu();
+    switch(selectedSize){
+        case 1:
+            BOARD_SIZE=3;
+            setting_menu();
+            break;
+        case 2:
+            BOARD_SIZE=5;
+            setting_menu();
+            break;
+        case 3:
+            BOARD_SIZE=7;
+            setting_menu();
+            break;
+        case 4:
+            BOARD_SIZE=9;
+            setting_menu();
+            break;
+        case 5:
+            setting_menu();
+            break;
+            }
+    }
+
+void bg_color_menu(){
     system("cls");
     Menu bgClrMenu(colorNames);
     bgClrMenu.setHeading("SELECT COLOR");
@@ -292,8 +341,7 @@ void bg_color_menu()
 
 }
 
-void bl_color_menu()
-{
+void bl_color_menu(){
 {
     system("cls");
     Menu blClrMenu(colorNames);
@@ -308,14 +356,65 @@ void bl_color_menu()
 }
 }
 
-void b_back_color_menu()
-{
+void b_back_color_menu(){
     system("cls");
     Menu bBackClrMenu(colorNames);
     bBackClrMenu.setHeading("SELECT COLOR");
     int selectedColor = bBackClrMenu.drawMenu();
     if(selectedColor < colorNames.size())
         BOARD_BG_CLR=(colorCodes[selectedColor-1]);
+    setting_menu();
+}
+
+void player_marker(){
+    system("cls");
+    Menu playerMarker({"SELECT MARKER FOR PLAYER 1" , "SELECT MARKER FOR PLAYER 2" , "BACK"});
+    playerMarker.setHeading("SELECT PLAYER");
+
+    switch(playerMarker.drawMenu()){
+
+        case 1 :
+    {
+            system("cls");
+            Menu playerMarker1(MARKERSTRING);
+            playerMarker1.setHeading("SELECT MARKER FOR PLAYER 1");
+            int selectedPlayerMarker1 = playerMarker1.drawMenu();
+            if(selectedPlayerMarker1 == MARKERSTRING.size())
+            player_marker();
+            else{
+            PLAYER_1_MARKER=MARKERSTRING[selectedPlayerMarker1-1][0];
+            player_marker();
+            }
+            break;
+    }
+        case 2 :
+    {
+            system("cls");
+            Menu playerMarker2(MARKERSTRING);
+            playerMarker2.setHeading("SELECT MARKER FOR PLAYER 2");
+            int selectedPlayerMarker2 = playerMarker2.drawMenu();
+            if(selectedPlayerMarker2 == MARKERSTRING.size())
+            player_marker();
+            else{
+            PLAYER_2_MARKER=MARKERSTRING[selectedPlayerMarker2-1][0];
+            player_marker();
+            }
+            break;
+    }
+        case 3 :
+            setting_menu();
+            break;
+    }
+
+}
+
+void marker_color(){
+    system("cls");
+    Menu markerColor(colorNames);
+    markerColor.setHeading("SELECT COLOR");
+    int selectedColor = markerColor.drawMenu();
+    if(selectedColor < colorNames.size())
+        MARKERCLR=(colorCodes[selectedColor-1]);
     setting_menu();
 }
 
@@ -338,9 +437,10 @@ void main_menu(){
                 setting_menu();
                 break;
         case 4 :
-                break;
+                exit(0);
     }
 }
+
 
 
 int main(){
